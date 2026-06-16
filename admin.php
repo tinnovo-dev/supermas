@@ -166,6 +166,94 @@ if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'afegir') {
   }
 }
 
+// Editar producte
+if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'editar') {
+  $id_model = (int)$_POST['id_model'];
+  $nom      = trim($_POST['nom']);
+  $cat      = (int)$_POST['categoria'];
+  $preu     = trim($_POST['preu']);
+  $stock    = trim($_POST['stock']);
+  $unitat   = trim($_POST['unitat']);
+
+  if ($nom && $id_model) {
+    // Actualitzar nom
+    $db->prepare('UPDATE catalogue_item_model SET name = ?, date_modificated = NOW() WHERE id = ?')->execute([$nom, $id_model]);
+
+    // Actualitzar categoria si cal
+    $stmt = $db->prepare('SELECT id FROM catalogue_item_model_category WHERE catalogue_category = ? AND catalogue = 1 LIMIT 1');
+    $stmt->execute([$cat]);
+    $imc = $stmt->fetchColumn();
+    if (!$imc) {
+      $stmt = $db->prepare('INSERT INTO catalogue_item_model_category (catalogue, catalogue_category, catalogue_item_model_category, name, date_create, date_modificated) VALUES (1, ?, -1, ?, NOW(), NOW())');
+      $stmt->execute([$cat, $_POST['nom_categoria']]);
+      $imc = $db->lastInsertId();
+    }
+    $db->prepare('UPDATE catalogue_item_model SET catalogue_item_model_category = ? WHERE id = ?')->execute([$imc, $id_model]);
+
+    // Gestionar imatge nova si s'ha pujat
+    $nom_imatge = null;
+    if (!empty($_FILES['imatge_edit']['tmp_name'])) {
+      $ext = strtolower(pathinfo($_FILES['imatge_edit']['name'], PATHINFO_EXTENSION));
+      $allowed = ['jpg','jpeg','png','webp','gif'];
+      if (in_array($ext, $allowed)) {
+        $nom_imatge = 'prod_' . $id_model . '.jpg';
+        $dest = __DIR__ . '/assets/img/productes/' . $nom_imatge;
+        $max_bytes = 1 * 1024 * 1024;
+        $info = getimagesize($_FILES['imatge_edit']['tmp_name']);
+        $src_w = $info[0]; $src_h = $info[1]; $mime = $info['mime'];
+        $src = match($mime) {
+          'image/jpeg' => imagecreatefromjpeg($_FILES['imatge_edit']['tmp_name']),
+          'image/png'  => imagecreatefrompng($_FILES['imatge_edit']['tmp_name']),
+          'image/webp' => imagecreatefromwebp($_FILES['imatge_edit']['tmp_name']),
+          'image/gif'  => imagecreatefromgif($_FILES['imatge_edit']['tmp_name']),
+          default      => false
+        };
+        if ($src) {
+          if ($src_w > 1200) {
+            $ratio = 1200 / $src_w;
+            $dst = imagecreatetruecolor(1200, (int)($src_h * $ratio));
+            imagecopyresampled($dst, $src, 0, 0, 0, 0, 1200, (int)($src_h * $ratio), $src_w, $src_h);
+            imagedestroy($src); $src = $dst;
+          }
+          $quality = 85;
+          do { ob_start(); imagejpeg($src, null, $quality); $data = ob_get_clean(); $quality -= 5; }
+          while (strlen($data) > $max_bytes && $quality > 20);
+          file_put_contents($dest, $data);
+          imagedestroy($src);
+        }
+      }
+    }
+
+    // Actualitzar camps dinàmics
+    foreach (['preu' => $preu, 'stock' => $stock, 'unitat' => $unitat] as $camp => $val) {
+      $stmt = $db->prepare('SELECT id FROM catalogue_field WHERE name = ?');
+      $stmt->execute([$camp]);
+      $id_field = $stmt->fetchColumn();
+      if (!$id_field) continue;
+      $stmt = $db->prepare('SELECT id FROM catalogue_field_value WHERE field = ? AND object = ?');
+      $stmt->execute([$id_field, $id_model]);
+      $id_fv = $stmt->fetchColumn();
+      if ($id_fv) {
+        $db->prepare('UPDATE catalogue_field_value SET value = ? WHERE id = ?')->execute([$val, $id_fv]);
+      } elseif ($val !== '') {
+        $db->prepare('INSERT INTO catalogue_field_value (field, object, value, lang) VALUES (?, ?, ?, "ALL")')->execute([$id_field, $id_model, $val]);
+      }
+    }
+
+    // Actualitzar imatge si s'ha pujat una de nova
+    if ($nom_imatge !== null) {
+      $stmt = $db->prepare('SELECT id FROM catalogue_field WHERE name = "imatge"');
+      $stmt->execute(); $id_field = $stmt->fetchColumn();
+      $stmt = $db->prepare('SELECT id FROM catalogue_field_value WHERE field = ? AND object = ?');
+      $stmt->execute([$id_field, $id_model]); $id_fv = $stmt->fetchColumn();
+      if ($id_fv) $db->prepare('UPDATE catalogue_field_value SET value = ? WHERE id = ?')->execute([$nom_imatge, $id_fv]);
+      else $db->prepare('INSERT INTO catalogue_field_value (field, object, value, lang) VALUES (?, ?, ?, "ALL")')->execute([$id_field, $id_model, $nom_imatge]);
+    }
+
+    $ok_msg = "Producte «{$nom}» actualitzat.";
+  }
+}
+
 // Actualitzar stock
 if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'stock') {
   $id_model = (int)$_POST['id_model'];
@@ -248,7 +336,7 @@ if (!isset($_SESSION['supermas_admin'])):
           <h5 style="color:var(--color-primary);font-weight:700;margin-bottom:1.5rem;">Productes</h5>
           <?php
           $stmt = $db->prepare('
-            SELECT m.id, m.name, cc.name AS categoria,
+            SELECT m.id, m.name, cc.id AS cat_id, cc.name AS categoria,
               MAX(CASE WHEN f.name = "preu"   THEN fv.value END) AS preu,
               MAX(CASE WHEN f.name = "stock"  THEN fv.value END) AS stock,
               MAX(CASE WHEN f.name = "unitat" THEN fv.value END) AS unitat,
@@ -259,7 +347,7 @@ if (!isset($_SESSION['supermas_admin'])):
             LEFT JOIN catalogue_field_value fv ON fv.object = m.id
             LEFT JOIN catalogue_field f ON f.id = fv.field
             WHERE imc.catalogue = 1
-            GROUP BY m.id, m.name, cc.name
+            GROUP BY m.id, m.name, cc.id, cc.name
             ORDER BY cc.name, m.name
           ');
           $stmt->execute();
@@ -277,6 +365,7 @@ if (!isset($_SESSION['supermas_admin'])):
                     <th>Preu</th>
                     <th>Unitat</th>
                     <th>Stock</th>
+                    <th>Editar</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -289,6 +378,7 @@ if (!isset($_SESSION['supermas_admin'])):
                       <?php endif; ?>
                       <strong><?= htmlspecialchars($p['name']) ?></strong>
                     </td>
+
                     <td><span style="font-size:.82rem;color:#666;"><?= htmlspecialchars($p['categoria']) ?></span></td>
                     <td><?= $p['preu'] ? htmlspecialchars($p['preu']) . ' €' : '—' ?></td>
                     <td><?= $p['unitat'] ? htmlspecialchars($p['unitat']) : '—' ?></td>
@@ -300,6 +390,17 @@ if (!isset($_SESSION['supermas_admin'])):
                           class="form-control form-control-sm" style="width:70px;" min="0">
                         <button type="submit" class="btn btn-sm" style="background:var(--color-primary);color:#fff;border-radius:.4rem;">✓</button>
                       </form>
+                    </td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-outline-primary" style="border-radius:.4rem;"
+                        data-bs-toggle="modal" data-bs-target="#modalEditar"
+                        data-id="<?= $p['id'] ?>"
+                        data-nom="<?= htmlspecialchars($p['name'], ENT_QUOTES) ?>"
+                        data-cat="<?= htmlspecialchars($p['cat_id'] ?? '', ENT_QUOTES) ?>"
+                        data-preu="<?= htmlspecialchars($p['preu'] ?? '', ENT_QUOTES) ?>"
+                        data-stock="<?= htmlspecialchars($p['stock'] ?? '', ENT_QUOTES) ?>"
+                        data-unitat="<?= htmlspecialchars($p['unitat'] ?? '', ENT_QUOTES) ?>"
+                        data-imatge="<?= htmlspecialchars($p['imatge'] ?? '', ENT_QUOTES) ?>">✎</button>
                     </td>
                     <td>
                       <form method="post" onsubmit="return confirm('Eliminar <?= htmlspecialchars(addslashes($p['name'])) ?>?')">
@@ -411,6 +512,96 @@ if (!isset($_SESSION['supermas_admin'])):
     </div>
   </div>
 
+<?php if (isset($_SESSION['supermas_admin'])): ?>
+<!-- Modal Editar Producte -->
+<div class="modal fade" id="modalEditar" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:1rem;">
+      <div class="modal-header" style="background:var(--color-primary);color:#fff;border-radius:1rem 1rem 0 0;">
+        <h6 class="modal-title fw-bold" id="modalEditarLabel">Editar producte</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form method="post" enctype="multipart/form-data" id="formEditar">
+          <input type="hidden" name="accio" value="editar">
+          <input type="hidden" name="id_model" id="edit_id_model">
+          <input type="hidden" name="nom_categoria" id="edit_nom_categoria">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nom del producte *</label>
+            <input type="text" class="form-control" name="nom" id="edit_nom" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Categoria *</label>
+            <select class="form-select" name="categoria" id="edit_categoria" required
+              onchange="document.getElementById('edit_nom_categoria').value=this.options[this.selectedIndex].text">
+              <option value="">Selecciona…</option>
+              <?php
+              $stmt2 = $db->prepare('SELECT id, name FROM catalogue_category WHERE catalogue = 1 ORDER BY name');
+              $stmt2->execute();
+              foreach ($stmt2->fetchAll(PDO::FETCH_ASSOC) as $c):
+              ?>
+                <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Preu (€)</label>
+              <input type="text" class="form-control" name="preu" id="edit_preu" placeholder="ex: 3.50">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Unitat</label>
+              <input type="text" class="form-control" name="unitat" id="edit_unitat" placeholder="ex: kg">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Stock</label>
+            <input type="number" class="form-control" name="stock" id="edit_stock" min="0">
+          </div>
+          <div class="mb-3">
+            <div id="edit_imatge_preview" class="mb-2" style="display:none;">
+              <img id="edit_imatge_img" src="" style="height:70px;border-radius:.5rem;object-fit:cover;">
+              <span id="edit_imatge_nom" style="font-size:.82rem;color:#666;margin-left:.5rem;"></span>
+            </div>
+            <label class="form-label fw-semibold">Canviar imatge</label>
+            <input type="file" class="form-control" name="imatge_edit" accept="image/*">
+            <div class="form-text">Deixa en blanc per mantenir la imatge actual.</div>
+          </div>
+          <div class="d-flex gap-2 justify-content-end pt-2">
+            <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel·lar</button>
+            <button type="submit" class="btn-comanda" style="border-radius:2rem;padding:.45rem 1.5rem;">Guardar canvis</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('modalEditar').addEventListener('show.bs.modal', function(e) {
+  var btn = e.relatedTarget;
+  document.getElementById('edit_id_model').value = btn.dataset.id;
+  document.getElementById('edit_nom').value       = btn.dataset.nom;
+  document.getElementById('edit_preu').value      = btn.dataset.preu;
+  document.getElementById('edit_stock').value     = btn.dataset.stock;
+  document.getElementById('edit_unitat').value    = btn.dataset.unitat;
+
+  var sel = document.getElementById('edit_categoria');
+  sel.value = btn.dataset.cat;
+  document.getElementById('edit_nom_categoria').value = sel.options[sel.selectedIndex]?.text || '';
+
+  var imatge = btn.dataset.imatge;
+  var prev = document.getElementById('edit_imatge_preview');
+  if (imatge) {
+    document.getElementById('edit_imatge_img').src = 'assets/img/productes/' + imatge;
+    document.getElementById('edit_imatge_nom').textContent = imatge;
+    prev.style.display = 'block';
+  } else {
+    prev.style.display = 'none';
+  }
+});
+</script>
 <?php endif; ?>
 
   <script src="assets/js/bootstrap.bundle.min.js"></script>
