@@ -73,7 +73,7 @@
     <div class="container">
       <div class="d-flex align-items-center justify-content-between">
         <h1 class="mb-0">Comanda Online</h1>
-        <a href="admin.php" class="btn btn-outline-light btn-sm rounded-pill" style="font-size:.82rem;opacity:.75;">⚙️ Stock</a>
+        <a href="admin.php" class="btn btn-sm rounded-pill" style="font-size:.82rem;background:var(--color-primary);color:#fff;border:none;">⚙️ Stock</a>
       </div>
       <p class="lead">Tria els teus productes i te'ls portem a casa. Fàcil i còmode.</p>
       <nav aria-label="breadcrumb">
