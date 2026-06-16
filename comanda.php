@@ -71,7 +71,10 @@
 
   <div class="hero-interior">
     <div class="container">
-      <h1>Comanda Online</h1>
+      <div class="d-flex align-items-center justify-content-between">
+        <h1 class="mb-0">Comanda Online</h1>
+        <a href="admin.php" class="btn btn-outline-light btn-sm rounded-pill" style="font-size:.82rem;opacity:.75;">⚙️ Stock</a>
+      </div>
       <p class="lead">Tria els teus productes i te'ls portem a casa. Fàcil i còmode.</p>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0" style="font-size:.85rem;">
@@ -292,9 +295,6 @@
               o escriu-nos a<br>
               <a href="mailto:supermas@supermas.cat">supermas@supermas.cat</a>
             </p>
-          </div>
-          <div class="mt-3 text-end">
-            <a href="admin.php" class="btn btn-outline-secondary btn-sm rounded-pill" style="font-size:.8rem;">⚙️ Stock</a>
           </div>
         </div>
       </div>
