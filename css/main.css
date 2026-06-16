@@ -1,0 +1,254 @@
+:root {
+  --color-primary: #1a4f8a;
+  --color-secondary: #f0f4fa;
+  --color-accent: #e85c0d;
+  --color-text: #222;
+}
+
+body {
+  font-family: 'Ubuntu', system-ui, sans-serif;
+  color: var(--color-text);
+  background-color: #fff;
+}
+
+/* Navbar */
+.navbar-supermas {
+  background-color: #fff;
+  border-bottom: 3px solid var(--color-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+.navbar-supermas .navbar-brand {
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--color-primary) !important;
+  letter-spacing: -.01em;
+}
+
+.navbar-supermas .nav-link {
+  color: var(--color-text) !important;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: .82rem;
+  letter-spacing: .05em;
+  padding: .5rem 1rem !important;
+}
+
+.navbar-supermas .nav-link:hover {
+  color: var(--color-primary) !important;
+}
+
+/* Hero cover */
+.hero {
+  min-height: 90vh;
+  background: linear-gradient(135deg, #e8f0fa 0%, #f5f8ff 60%, #fff3ee 100%);
+  display: flex;
+  align-items: center;
+}
+
+.hero-title {
+  font-size: clamp(2.8rem, 6vw, 5.5rem);
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.1;
+}
+
+.hero-subtitle {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: #555;
+  font-style: italic;
+}
+
+.hero-badge {
+  background-color: var(--color-accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: .9rem;
+  padding: .4rem 1.2rem;
+  border-radius: 2rem;
+  display: inline-block;
+}
+
+/* Cards seccions */
+.card-seccio {
+  border: none;
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: transform .2s, box-shadow .2s;
+  background-color: var(--color-secondary);
+  cursor: pointer;
+}
+
+.card-seccio:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+}
+
+.card-seccio .card-icon {
+  font-size: 2.8rem;
+  margin-bottom: .5rem;
+}
+
+.card-seccio .card-title {
+  font-weight: 700;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  font-size: .95rem;
+  letter-spacing: .05em;
+}
+
+/* Banner comanda online */
+.banner-comanda {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+.banner-comanda h2 {
+  font-weight: 700;
+}
+
+.btn-comanda {
+  background-color: var(--color-accent);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  padding: .75rem 2.2rem;
+  border-radius: 2rem;
+  font-size: 1.1rem;
+  transition: background-color .2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-comanda:hover {
+  background-color: #c8861a;
+  color: #fff;
+}
+
+/* Footer */
+footer {
+  background-color: var(--color-primary);
+  color: rgba(255,255,255,.85);
+  font-size: .9rem;
+}
+
+footer a {
+  color: rgba(255,255,255,.7);
+  text-decoration: none;
+}
+
+footer a:hover {
+  color: #fff;
+}
+
+.footer-title {
+  color: #fff;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: .8rem;
+  letter-spacing: .08em;
+  margin-bottom: .75rem;
+}
+
+/* Hero interior */
+.hero-interior {
+  background: linear-gradient(135deg, #e8f0fa 0%, #f5f8ff 60%, #fff3ee 100%);
+  padding: 3.5rem 0 2.5rem;
+  border-bottom: 3px solid var(--color-secondary);
+}
+
+.hero-interior h1 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.hero-interior p.lead {
+  color: #555;
+  font-size: 1.1rem;
+}
+
+/* Seccions àncora */
+.seccio {
+  padding: 4rem 0;
+}
+
+.seccio:nth-child(even) {
+  background-color: var(--color-secondary);
+}
+
+.seccio-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Targetes */
+.targeta {
+  border: none;
+  border-radius: 1rem;
+  padding: 2rem;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07);
+  height: 100%;
+}
+
+/* Dropdowns */
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 4px 20px rgba(0,0,0,.12);
+  border-radius: .75rem;
+  padding: .5rem;
+}
+
+.dropdown-item {
+  border-radius: .5rem;
+  font-size: .88rem;
+  font-weight: 500;
+  padding: .5rem 1rem;
+}
+
+.dropdown-item:hover {
+  background-color: var(--color-secondary);
+  color: var(--color-primary);
+}
+
+/* Comanda form */
+.form-section-title {
+  font-weight: 700;
+  color: var(--color-primary);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border-bottom: 2px solid var(--color-secondary);
+  padding-bottom: .5rem;
+  margin-bottom: 1.25rem;
+}
+
+.producte-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .6rem .75rem;
+  border-radius: .5rem;
+  background: #f8f9fa;
+  margin-bottom: .4rem;
+}
+
+.producte-row label {
+  font-size: .95rem;
+  margin: 0;
+  flex: 1;
+}
+
+.producte-row input[type=number] {
+  width: 80px;
+  font-size: .9rem;
+}
+
+.preu-info {
+  background-color: var(--color-secondary);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  font-size: .95rem;
+}
+
