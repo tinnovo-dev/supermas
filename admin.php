@@ -47,7 +47,7 @@ try {
 // ── ACCIONS ──────────────────────────────────────────────
 
 // Afegir categoria
-if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'afegir_categoria') {
+if (isset($_SESSION['supermas_admin']) && ($_POST['accio'] ?? '') === 'afegir_categoria') {
   $nom_cat = trim($_POST['nom_cat']);
   if ($nom_cat) {
     $stmt = $db->prepare('INSERT INTO catalogue_category (catalogue, catalogue_category, name, date_create, date_modificated) VALUES (1, -1, ?, NOW(), NOW())');
@@ -57,7 +57,7 @@ if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'afegir_categoria'
 }
 
 // Eliminar categoria (i tots els seus productes)
-if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'eliminar_categoria') {
+if (isset($_SESSION['supermas_admin']) && ($_POST['accio'] ?? '') === 'eliminar_categoria') {
   $id_cat = (int)$_POST['id_cat'];
   // Obtenir tots els models de la categoria
   $stmt = $db->prepare('SELECT m.id FROM catalogue_item_model m INNER JOIN catalogue_item_model_category imc ON m.catalogue_item_model_category = imc.id WHERE imc.catalogue_category = ?');
@@ -74,7 +74,7 @@ if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'eliminar_categori
 }
 
 // Afegir producte
-if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'afegir') {
+if (isset($_SESSION['supermas_admin']) && ($_POST['accio'] ?? '') === 'afegir') {
   $nom    = trim($_POST['nom']);
   $cat    = (int)$_POST['categoria'];
   $preu   = trim($_POST['preu']);
@@ -167,7 +167,7 @@ if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'afegir') {
 }
 
 // Editar producte
-if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'editar') {
+if (isset($_SESSION['supermas_admin']) && ($_POST['accio'] ?? '') === 'editar') {
   $id_model = (int)$_POST['id_model'];
   $nom      = trim($_POST['nom']);
   $cat      = (int)$_POST['categoria'];
@@ -255,7 +255,7 @@ if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'editar') {
 }
 
 // Actualitzar stock
-if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'stock') {
+if (isset($_SESSION['supermas_admin']) && ($_POST['accio'] ?? '') === 'stock') {
   $id_model = (int)$_POST['id_model'];
   $nou_stock = trim($_POST['nou_stock']);
   $stmt = $db->prepare('SELECT id FROM catalogue_field WHERE name = "stock"');
@@ -273,7 +273,7 @@ if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'stock') {
 }
 
 // Eliminar producte
-if (isset($_SESSION['supermas_admin']) && $_POST['accio'] === 'eliminar') {
+if (isset($_SESSION['supermas_admin']) && ($_POST['accio'] ?? '') === 'eliminar') {
   $id_model = (int)$_POST['id_model'];
   $db->prepare('DELETE FROM catalogue_field_value WHERE object = ?')->execute([$id_model]);
   $db->prepare('DELETE FROM catalogue_item WHERE catalogue_item_model = ?')->execute([$id_model]);
@@ -511,6 +511,8 @@ if (!isset($_SESSION['supermas_admin'])):
 
     </div>
   </div>
+
+<?php endif; ?>
 
 <?php if (isset($_SESSION['supermas_admin'])): ?>
 <!-- Modal Editar Producte -->
